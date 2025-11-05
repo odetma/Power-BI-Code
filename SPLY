@@ -1,0 +1,42 @@
+DEFINE 
+
+FUNCTION fnSAMEPERIODLY = (_measure1:expr) =>
+VAR _MaxDate = MAX(DIM_DATE[Date])
+VAR _MinDate = MIN(DIM_DATE[Date])
+VAR _StartDate = DATE(YEAR(_MinDate) - 1, MONTH(_MinDate), DAY(_MinDate))
+VAR _EndDate = DATE(YEAR(_MaxDate) - 1, MONTH(_MaxDate), DAY(_MaxDate))
+VAR _PY = YEAR(_MaxDate) - 1
+VAR _IsLeapYear = 
+OR(
+			MOD(
+				_PY,
+				400
+			) = 0,
+			AND(
+				MOD(
+					_PY,
+					4
+				) = 0,
+				MOD(
+					_PY,
+					100
+				) <> 0
+			)
+		)
+VAR EndDate =
+		IF(
+			MONTH(_MaxDate) = 2
+			&& DAY(_MaxDate) = 28
+			&& _IsLeapYear,
+			_EndDate + 1,
+		IF(
+				MONTH(_MaxDate) = 2 && DAY(_MaxDate) = 29 && _IsLeapYear = FALSE(),
+				_EndDate - 1,
+				_EndDate
+			)
+		)
+
+
+RETURN
+
+CALCULATE(_measure1,FILTER(ALL(DIM_DATE),DIM_DATE[Date] >=_StartDate && DIM_DATE[Date] <= EndDate))
