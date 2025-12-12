@@ -1,0 +1,60 @@
+function fnSPLY =
+		(_Measure1: expr) =>
+			/*It turns out there’s a known bug in Power BI - the default calculation of SAMEPERIODLASTYEAR doesn’t work correctly when you filter dates by days and include the last day of the month.
+		In this situation, Power BI interprets it as the end of the month and compares the previous period to the entire previous month.
+		In other words, even though the current month hasn’t ended yet, it still calculates the previous period as a full month. So this is why this function created*/
+				VAR Max_date = MAX('DIM_DATE'[Date])
+				VAR Min_date = MIN('DIM_DATE'[Date])
+				VAR StartDate = DATE(YEAR(Min_date) - 1, MONTH(Min_date), DAY(Min_date))
+				VAR EndDateBase = DATE(YEAR(Max_date) - 1, MONTH(Max_date), DAY(Max_date))
+				VAR PY = YEAR(Max_date) - 1
+				VAR IsLeapPY =
+				OR(
+					MOD(
+						PY,
+						400
+					) = 0,
+					AND(
+						MOD(
+							PY,
+							4
+						) = 0,
+						MOD(
+							PY,
+							100
+						) <> 0
+					)
+				)
+				VAR EndDate =
+				IF(
+					MONTH(Max_date) = 2
+					&& DAY(Max_date) = 28
+					&& IsLeapPY,
+					EndDateBase + 1,
+					IF(
+						MONTH(Max_date) = 2 && DAY(Max_date) = 29 && IsLeapPY = FALSE(),
+						EndDateBase - 1,
+						EndDateBase
+					)
+				)
+				RETURN
+					CALCULATE(
+						_Measure1,
+						FILTER(
+							ALL('DIM_DATE'),
+							'DIM_DATE'[Date] >= StartDate &&
+							'DIM_DATE'[Date] <= EndDate
+						)
+					)
+	lineageTag: 4fdd5538-b78e-4ef7-b39e-523955826275
+
+function fnPrevMonth =
+		(var1:expr) =>
+		CALCULATE(var1,DATEADD(DIM_DATE[Date], -1, MONTH))
+	lineageTag: b52e984c-9979-4cc4-b9a7-3d00149147c0
+
+function fnVAT =
+		(Numeric_Measure:expr) =>
+		Numeric_Measure *1.17
+	lineageTag: 90f57ada-5e81-4313-b44c-065b9ff8436a
+
