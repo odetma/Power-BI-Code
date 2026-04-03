@@ -1,4 +1,4 @@
-I have a PBIP workspace with Theme.Report and Theme.SemanticModel.
+I have a PBIP workspace with [YOUR REPORT FOLDER NAME] and [YOUR SEMANTIC MODEL FOLDER NAME].
 
 Task:
 Create ONE Power BI theme JSON file only (not separate files), using my guides:
