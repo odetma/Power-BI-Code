@@ -1,0 +1,13 @@
+DEFINE
+    /// Returns the date-shift filter table for prior-period comparisons (YoY / QoQ / MoM), driven by the user's selection in _Par_Period[PeriodSelected]. Defaults to YoY when no period is selected. Used by all PP measures to avoid duplicating the period-switching SWITCH logic.
+    FUNCTION _PriorPeriodDates = () =>
+VAR _Period = SELECTEDVALUE('_Par_Period '[PeriodSelected], "YoY" )
+VAR _YoY = SAMEPERIODLASTYEAR( DW_DIM_DATE_VW[DATE_ID] )
+VAR _QoQ = DATEADD( DW_DIM_DATE_VW[DATE_ID], -1, QUARTER )
+VAR _MoM = DATEADD( DW_DIM_DATE_VW[DATE_ID], -1, MONTH )
+RETURN
+    UNION(
+        FILTER( _YoY, _Period = "YoY" ),
+        FILTER( _QoQ, _Period = "QoQ" ),
+        FILTER( _MoM, _Period = "MoM" )
+    )
