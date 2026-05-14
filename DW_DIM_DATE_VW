@@ -1,0 +1,134 @@
+createOrReplace
+
+	table DW_DIM_DATE_VW
+		lineageTag: 18b9058d-8fc7-4149-98db-2b8d9e2c91b6
+		dataCategory: Time
+
+		column DATE_ID
+			isUnique
+			formatString: General Date
+			lineageTag: 5076368b-a176-4475-8260-e258902873e9
+			summarizeBy: none
+			sourceColumn: [Date]
+
+			annotation SummarizationSetBy = Automatic
+
+		column DateKey
+			formatString: 0
+			lineageTag: 41d1f42a-6119-4dd0-a5b9-a6214e2b676f
+			summarizeBy: none
+			isNameInferred
+			sourceColumn: [DateKey]
+
+			annotation SummarizationSetBy = Automatic
+
+		column YEAR
+			dataType: string
+			lineageTag: f9372bf5-5b38-4e2d-9dbf-7d31339d4156
+			summarizeBy: none
+			sourceColumn: [Year]
+
+			annotation SummarizationSetBy = Automatic
+
+		column QuarterLabel
+			lineageTag: 0f1e29f9-b6a1-4d43-abba-755faaecde12
+			summarizeBy: none
+			isNameInferred
+			sourceColumn: [QuarterLabel]
+
+			annotation SummarizationSetBy = Automatic
+
+		column MonthName
+			lineageTag: 9c1c75c0-184b-4c97-9114-4c5600ac01fe
+			summarizeBy: none
+			isNameInferred
+			sourceColumn: [MonthName]
+
+			annotation SummarizationSetBy = Automatic
+
+		column MonthShort
+			lineageTag: d76b60a3-9aa9-4c74-b267-88dfe489ce63
+			summarizeBy: none
+			isNameInferred
+			sourceColumn: [MonthShort]
+
+			annotation SummarizationSetBy = Automatic
+
+		column YearMonth
+			lineageTag: 8adcbd7e-820c-4e49-91dc-c7c0135689ea
+			summarizeBy: none
+			isNameInferred
+			sourceColumn: [YearMonth]
+
+			annotation SummarizationSetBy = Automatic
+
+		column YearQuarter
+			lineageTag: 0150672d-0c1f-454f-887c-3621166663fa
+			summarizeBy: none
+			isNameInferred
+			sourceColumn: [YearQuarter]
+
+			annotation SummarizationSetBy = Automatic
+
+		column MonthStart
+			formatString: General Date
+			lineageTag: 1a4f4d32-9822-464c-8a5e-015d72d6d36a
+			summarizeBy: none
+			isNameInferred
+			sourceColumn: [MonthStart]
+
+			annotation SummarizationSetBy = Automatic
+
+		column QUARTER_IN_YEAR
+			lineageTag: a3a699e5-da08-46da-93ef-1bc2ef23aee7
+			summarizeBy: none
+			isNameInferred
+			sourceColumn: [QUARTER_IN_YEAR]
+			sortByColumn: QuarterInYearSort
+
+		column MONTH_IN_YEAR
+			lineageTag: 0864c512-a01d-42ee-be65-f62a50a0bc57
+			summarizeBy: none
+			isNameInferred
+			sourceColumn: [MONTH_IN_YEAR]
+			sortByColumn: MonthInYearSort
+
+		column MonthInYearSort
+			isHidden
+			formatString: 0
+			lineageTag: c11044d6-b5b2-4c6f-b947-acc4c4305c8d
+			summarizeBy: none
+			isNameInferred
+			sourceColumn: [MonthInYearSort]
+
+			annotation SummarizationSetBy = Automatic
+
+		column QuarterInYearSort
+			isHidden
+			formatString: 0
+			lineageTag: 3c7f0a50-9a0f-4fdd-8098-6eab65492318
+			summarizeBy: none
+			isNameInferred
+			sourceColumn: [QuarterInYearSort]
+
+			annotation SummarizationSetBy = Automatic
+
+		partition DIM_DATE = calculated
+			mode: import
+			source =
+					ADDCOLUMNS(
+					    CALENDAR(DATE(2023, 1, 1), DATE(2025, 12, 31)),
+					    "DateKey", YEAR([Date]) * 10000 + MONTH([Date]) * 100 + DAY([Date]),
+					    "YEAR", CONVERT(YEAR([Date]),TEXT),
+					    "QUARTER_IN_YEAR", FORMAT([Date], "YYYY") & "-Q" & FORMAT([Date], "Q"),
+					    "QuarterLabel", "Q" & FORMAT([Date], "Q"),
+					    "MONTH_IN_YEAR", FORMAT([Date], "YYYY-MM"),
+					    "MonthName", FORMAT([Date], "MMMM"),
+					    "MonthShort", FORMAT([Date], "MMM"),
+					    "YearMonth", FORMAT([Date], "YYYY-MM"),
+					    "YearQuarter", FORMAT([Date], "YYYY") & "-Q" & FORMAT([Date], "Q"),
+					    "MonthStart", DATE(YEAR([Date]), MONTH([Date]), 1),
+					    "MonthInYearSort", YEAR([Date]) * 100 + MONTH([Date]),
+					    "QuarterInYearSort", YEAR([Date]) * 10 + QUARTER([Date])
+					)
+
