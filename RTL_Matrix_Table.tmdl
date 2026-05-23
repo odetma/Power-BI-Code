@@ -1,0 +1,227 @@
+createOrReplace
+
+	ref table FactSales
+
+		/// טבלת מטריקס RTL אינטראקטיבית עם drill-down
+		measure 'RTL Matrix מכירות לפי מוצר' =
+				
+				VAR SQ = UNICHAR(39)
+				VAR BS = UNICHAR(92)
+				
+				VAR _rows =
+				    ADDCOLUMNS(
+				        SUMMARIZE(
+				            FactSales,
+				            DimProduct[CategoryName],
+				            DimProduct[BrandName],
+				            DimProduct[ProductName]
+				        ),
+				        "__s", CALCULATE(SUM(FactSales[SalesAmount])),
+				        "__q", CALCULATE(SUM(FactSales[Quantity]))
+				    )
+				
+				VAR _data =
+				    CONCATENATEX(
+				        _rows,
+				        VAR Cat0 = COALESCE(DimProduct[CategoryName], "")
+				        VAR Br0  = COALESCE(DimProduct[BrandName], "")
+				        VAR N0   = COALESCE(DimProduct[ProductName], "")
+				        VAR Cat =
+				            SUBSTITUTE(
+				                SUBSTITUTE(
+				                    SUBSTITUTE(
+				                        SUBSTITUTE(Cat0, BS, BS & BS),
+				                        SQ, BS & SQ
+				                    ),
+				                    UNICHAR(13), ""
+				                ),
+				                UNICHAR(10), BS & "n"
+				            )
+				        VAR Br =
+				            SUBSTITUTE(
+				                SUBSTITUTE(
+				                    SUBSTITUTE(
+				                        SUBSTITUTE(Br0, BS, BS & BS),
+				                        SQ, BS & SQ
+				                    ),
+				                    UNICHAR(13), ""
+				                ),
+				                UNICHAR(10), BS & "n"
+				            )
+				        VAR N =
+				            SUBSTITUTE(
+				                SUBSTITUTE(
+				                    SUBSTITUTE(
+				                        SUBSTITUTE(N0, BS, BS & BS),
+				                        SQ, BS & SQ
+				                    ),
+				                    UNICHAR(13), ""
+				                ),
+				                UNICHAR(10), BS & "n"
+				            )
+				        RETURN
+				            "[" &
+				                SQ & Cat & SQ & "," &
+				                SQ & Br  & SQ & "," &
+				                SQ & N   & SQ & "," &
+				                FORMAT(COALESCE([__s], 0), "0.############", "en-US") & "," &
+				                FORMAT(COALESCE([__q], 0), "0.############", "en-US") &
+				            "]",
+				        ","
+				    )
+				
+				VAR _css =
+				"*{box-sizing:border-box;margin:0;padding:0;font-family:Segoe UI,Arial,sans-serif}
+				body{direction:rtl;background:#fff;padding:8px;color:#222}
+				.tw{border:1px solid #e0e0e0;border-radius:8px;overflow:auto;background:#fff}
+				table{width:100%;border-collapse:collapse;direction:rtl;table-layout:fixed}
+				thead tr{background:#f7f8fa}
+				th{position:relative;padding:8px 12px;font-size:11px;font-weight:600;color:#555;text-align:right;border-bottom:1px solid #e8e8e8;border-left:1px solid #e8e8e8;white-space:nowrap;user-select:none;cursor:grab}
+				th:last-child,td:last-child{border-left:none}
+				td{padding:7px 12px;font-size:12px;color:#222;border-bottom:1px solid #f0f0f0;text-align:right;border-left:1px solid #f0f0f0;vertical-align:middle}
+				.name{text-align:right!important;direction:rtl;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+				.nc{text-align:left!important;direction:ltr;white-space:nowrap}
+				.dr{cursor:pointer}
+				.dr:hover td{background:#f5f7ff}
+				.gt td{background:#eef1f7;font-weight:700;border-top:1px solid #d8dce8}
+				.eb{display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;border:1px solid #c8c8c8;border-radius:3px;background:#fff;font-size:11px;color:#555;margin-right:6px;font-weight:700;line-height:1}
+				.i1{padding-right:24px}
+				.i2{padding-right:44px}
+				.rz{position:absolute;top:0;left:0;width:8px;height:100%;cursor:col-resize}
+				.dragging{opacity:.45}"
+				
+				VAR _js =
+				"var SQ=String.fromCharCode(39);
+				var R=[" & _data & "];
+				var D={};
+				R.forEach(function(x){
+				 var c=x[0],b=x[1],n=x[2],s=+x[3],q=+x[4];
+				 if(!D[c])D[c]={};
+				 if(!D[c][b])D[c][b]=[];
+				 D[c][b].push({n:n,s:s,q:q});
+				});
+				var S={};
+				Object.keys(D).forEach(function(c){
+				 S[c]={o:false};
+				 Object.keys(D[c]).forEach(function(b){S[c+'|'+b]={o:false};});
+				});
+				var cols=[
+				 {id:'name',t:'מוצר',w:50},
+				 {id:'sales',t:'סכום מכירות (₪)',w:25},
+				 {id:'qty',t:'סכום כמות',w:25}
+				];
+				function fmt(n){return Number(n||0).toLocaleString('he-IL');}
+				function esc(x){return String(x==null?'':x).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/'/g,'&#39;');}
+				function td(v,cls){return '<td class=' + SQ + (cls||'') + SQ + '>' + v + '</td>';}
+				function makeRow(vals,cls,act){
+				 var h='<tr class=' + SQ + (cls||'') + SQ + (act ? ' data-act=' + SQ + act + SQ : '') + '>';
+				 cols.forEach(function(c){h+=vals[c.id];});
+				 return h+'</tr>';
+				}
+				function drawHead(){
+				 var cg='',h='<tr>';
+				 cols.forEach(function(c,i){
+				  cg+='<col style=' + SQ + 'width:'+c.w+'%' + SQ + '>';
+				  h+='<th draggable=' + SQ + 'true' + SQ + ' data-i=' + SQ + i + SQ + '>'+esc(c.t)+'<span class=' + SQ + 'rz' + SQ + ' data-i=' + SQ + i + SQ + '></span></th>';
+				 });
+				 document.getElementById('cg').innerHTML=cg;
+				 document.getElementById('hd').innerHTML=h+'</tr>';
+				 bindHead();
+				}
+				function bindHead(){
+				 document.querySelectorAll('th').forEach(function(th){
+				  th.ondragstart=function(e){e.dataTransfer.setData('i',th.dataset.i);th.classList.add('dragging');};
+				  th.ondragend=function(){th.classList.remove('dragging');};
+				  th.ondragover=function(e){e.preventDefault();};
+				  th.ondrop=function(e){
+				   e.preventDefault();
+				   var a=+e.dataTransfer.getData('i'),b=+th.dataset.i;
+				   if(a!==b){var x=cols.splice(a,1)[0];cols.splice(b,0,x);render();}
+				  };
+				 });
+				 document.querySelectorAll('.rz').forEach(function(r){
+				  r.onmousedown=function(e){
+				   e.stopPropagation();
+				   e.preventDefault();
+				   var i=+r.dataset.i,sx=e.clientX,sw=cols[i].w;
+				   document.onmousemove=function(ev){
+				    cols[i].w=Math.max(8,sw+(sx-ev.clientX)/6);
+				    drawHead();
+				   };
+				   document.onmouseup=function(){document.onmousemove=null;document.onmouseup=null;};
+				  };
+				 });
+				}
+				function render(){
+				 drawHead();
+				 var rows='';
+				 Object.keys(D).forEach(function(c){
+				  var cs=0,cq=0;
+				  Object.keys(D[c]).forEach(function(b){D[c][b].forEach(function(p){cs+=p.s;cq+=p.q;});});
+				  var co=S[c].o;
+				  rows+=makeRow({
+				   name:td('<b>'+esc(c)+'</b><span class=' + SQ + 'eb' + SQ + '>'+(co?'-':'+')+'</span>','name'),
+				   sales:td(fmt(cs),'nc'),
+				   qty:td(fmt(cq),'nc')
+				  },'dr','c:'+encodeURIComponent(c));
+				
+				  if(co){
+				   Object.keys(D[c]).forEach(function(b){
+				    var bs=0,bq=0;
+				    D[c][b].forEach(function(p){bs+=p.s;bq+=p.q;});
+				    var k=c+'|'+b,bo=S[k].o;
+				    rows+=makeRow({
+				     name:td(esc(b)+'<span class=' + SQ + 'eb' + SQ + '>'+(bo?'-':'+')+'</span>','name i1'),
+				     sales:td(fmt(bs),'nc'),
+				     qty:td(fmt(bq),'nc')
+				    },'dr','b:'+encodeURIComponent(c)+'|'+encodeURIComponent(b));
+				
+				    if(bo){
+				     D[c][b].forEach(function(p){
+				      rows+=makeRow({
+				       name:td(esc(p.n),'name i2'),
+				       sales:td(fmt(p.s),'nc'),
+				       qty:td(fmt(p.q),'nc')
+				      },'','');
+				     });
+				    }
+				   });
+				  }
+				 });
+				 var ts=0,tq=0;
+				 R.forEach(function(x){ts+=+x[3];tq+=+x[4];});
+				 rows+=makeRow({
+				  name:td('סה&quot;כ כולל','name'),
+				  sales:td(fmt(ts),'nc'),
+				  qty:td(fmt(tq),'nc')
+				 },'gt','');
+				 document.getElementById('tb').innerHTML=rows;
+				}
+				document.getElementById('tb').onclick=function(e){
+				 var tr=e.target.closest('tr[data-act]');
+				 if(!tr)return;
+				 var a=tr.getAttribute('data-act');
+				 if(a.indexOf('c:')===0){
+				  var c=decodeURIComponent(a.slice(2));
+				  S[c].o=!S[c].o;
+				  render();
+				 }
+				 if(a.indexOf('b:')===0){
+				  var x=a.slice(2).split('|');
+				  var c=decodeURIComponent(x[0]);
+				  var b=decodeURIComponent(x[1]);
+				  S[c+'|'+b].o=!S[c+'|'+b].o;
+				  render();
+				 }
+				};
+				render();"
+				
+				RETURN
+				"<!DOCTYPE html><html dir='rtl' lang='he'><head><meta charset='UTF-8'><style>" & _css & "</style></head><body>" &
+				"<div class='tw'><table><colgroup id='cg'></colgroup><thead id='hd'></thead><tbody id='tb'></tbody></table></div>" &
+				"<script type='text/javascript'>" & _js & "</script></body></html>"
+			lineageTag: ec128d9e-dfcc-4617-87bb-e9322a78e111
+			dataCategory: WebUrl
+
+			annotation PBI_FormatHint = {"isText":true}
+
