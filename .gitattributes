@@ -1,0 +1,10 @@
+* text=auto
+
+*.dax text
+*.tmdl text
+*.md text
+*.json text
+*.yml text
+*.yaml text
+*.py text
+*.csx text
