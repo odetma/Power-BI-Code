@@ -13,6 +13,7 @@ This repository is meant to accompany tutorials and posts. Each folder contains 
 | Scripts | [`scripts/`](scripts/) | Tabular Editor and automation scripts for Power BI development workflows. |
 | Prompts | [`prompts/`](prompts/) | Prompt templates for Power BI QA, report review, and AI-assisted workflows. |
 | Theme skill | [`skills/power-bi-theme-style/`](skills/power-bi-theme-style/) | Instructions and starter assets for extracting PBIP styling and creating Power BI theme presets. |
+| Report Builder skill | [`skills/powerbi-report-builder/`](skills/powerbi-report-builder/) | Model-aware PBIR authoring, drillthrough, validation, Desktop reload, and saved screenshot review, including opt-in native UIA warning handling. |
 | PBIP change summary | [`.github/workflows/pbip-summary.yml`](.github/workflows/pbip-summary.yml) | GitHub Actions workflow that summarizes PBIP/TMDL/report changes in pull requests. |
 
 ## Quick Start
@@ -21,6 +22,21 @@ This repository is meant to accompany tutorials and posts. Each folder contains 
 2. Read the folder-level `README.md` for usage notes.
 3. Copy the relevant snippet into your Power BI model, Tabular Editor script, PBIP project, or AI workflow.
 4. Replace sample table, column, path, and measure names with your own model names.
+
+### Build reports with an AI assistant
+
+The [Power BI Report Builder skill](skills/powerbi-report-builder/README.md) is a portable, Windows-based workflow for Codex, Claude Code, and compatible local skill clients. It supports opening `definition.pbir` directly, so a generated PBIP launcher is not required.
+
+From a clone of this repository:
+
+```powershell
+.\scripts\install-powerbi-report-builder.ps1
+# Follow the printed setup command for your installed skill folder.
+```
+
+Install Power BI Desktop 2.159+, Python 3.10+, Node.js 20+ with npm, and Git first. Then run the installed skill's `scripts/setup.ps1`, configure Microsoft's modeling MCP in your AI client, and open your report in Desktop. Setup installs pinned dependencies locally; it does not change your global PATH or configure authentication.
+
+Ask your assistant to use `$powerbi-report-builder` and provide the report path and desired change. Its workflow is **inspect → author → validate → reload → capture → review → save**. Native confirmation of the exact multiple-source warning is off by default and requires your authorization. See the [installation and usage guide](skills/powerbi-report-builder/README.md) for client-specific destinations, commands, limitations, and tested versions.
 
 ## Repository Map
 
@@ -35,7 +51,8 @@ This repository is meant to accompany tutorials and posts. Each folder contains 
 │   └── tabular-editor/
 ├── prompts/
 ├── skills/
-│   └── power-bi-theme-style/
+│   ├── power-bi-theme-style/
+│   └── powerbi-report-builder/
 └── .github/
     ├── scripts/
     └── workflows/
@@ -49,6 +66,7 @@ This repository is meant to accompany tutorials and posts. Each folder contains 
 - A Tabular Editor C# script for exporting model metadata.
 - A PBIP pull-request summary workflow for reviewers.
 - Theme extraction and style preset resources for Power BI custom themes.
+- A portable PBIR Report Builder skill with local setup, native Desktop dialog handling, saved screenshot review, and tested product/month drillthrough guidance.
 
 ## Requirements
 
@@ -58,6 +76,7 @@ Most snippets can be used independently. Depending on the file, you may need:
 - Tabular Editor 2 or 3 for C# scripts and TMDL workflows.
 - A PBIP project if using the PBIP change summary workflow.
 - GitHub Actions enabled if copying the workflow into another repository.
+- Windows, Desktop Bridge-compatible Power BI Desktop, Node, Python, and a configured modeling MCP for the Report Builder skill; see its README for exact requirements.
 
 ## Notes
 

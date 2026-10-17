@@ -11,6 +11,11 @@ __pycache__/
 .venv/
 venv/
 
+# Skill-local tools (installed by setup, never distributed)
+.runtime/
+node_modules/
+python-deps/
+
 # Power BI local/generated files
 *.pbix
 *.pbit
