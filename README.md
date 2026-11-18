@@ -10,6 +10,7 @@ This repository is meant to accompany tutorials and posts. Each folder contains 
 | --- | --- | --- |
 | DAX functions | [`dax/`](dax/) | Reusable DAX query functions, especially time-intelligence helpers. |
 | TMDL examples | [`tmdl/`](tmdl/) | Date table definitions, model functions, and HTML-measure examples. |
+| Metadata installer | [`scripts/pbip-metadata-installer/`](scripts/pbip-metadata-installer/) | Install automatic PBIP Markdown documentation, with optional Power BI Service links. |
 | Scripts | [`scripts/`](scripts/) | Tabular Editor and automation scripts for Power BI development workflows. |
 | Prompts | [`prompts/`](prompts/) | Prompt templates for Power BI QA, report review, and AI-assisted workflows. |
 | Theme skill | [`skills/power-bi-theme-style/`](skills/power-bi-theme-style/) | Instructions and starter assets for extracting PBIP styling and creating Power BI theme presets. |
@@ -37,6 +38,17 @@ From a clone of this repository:
 Install Power BI Desktop 2.159+, Python 3.10+, Node.js 20+ with npm, and Git first. Then run the installed skill's `scripts/setup.ps1`, configure Microsoft's modeling MCP in your AI client, and open your report in Desktop. Setup installs pinned dependencies locally; it does not change your global PATH or configure authentication.
 
 Ask your assistant to use `$powerbi-report-builder` and provide the report path and desired change. Its workflow is **inspect → author → validate → reload → capture → review → save**. Native confirmation of the exact multiple-source warning is off by default and requires your authorization. See the [installation and usage guide](skills/powerbi-report-builder/README.md) for client-specific destinations, commands, limitations, and tested versions.
+
+### Install automatic report documentation
+
+The [PBIP Metadata Documentation Installer](scripts/pbip-metadata-installer/README.md) creates a portable documentation pipeline in an existing PBIP repository. It preserves multiline DAX/M and descriptions, supports Unicode names, and optionally enriches documents with Power BI workspace links.
+
+```powershell
+.\scripts\pbip-metadata-installer\install.ps1 -RepositoryPath "C:\Repos\MyPowerBI" -WhatIf
+# Remove -WhatIf to install. Add -WithService for optional service enrichment.
+```
+
+Requires Python 3.11+ and Git. Installation does not commit, push or change cloud permissions. The package includes English setup instructions, offline regression/integration tests, a standalone ZIP builder, and no preconfigured operational IDs or credentials.
 
 ## Repository Map
 

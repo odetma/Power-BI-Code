@@ -1,0 +1,5 @@
+{
+  "source_directories": ["<PBIP_SOURCE_DIRECTORY>"],
+  "documentation_branch": "pbip-metadata",
+  "service_enrichment": false
+}
