@@ -48,7 +48,7 @@ The [PBIP Metadata Documentation Installer](scripts/pbip-metadata-installer/READ
 # Remove -WhatIf to install. Add -WithService for optional service enrichment.
 ```
 
-Requires Python 3.11+ and Git. Installation does not commit, push or change cloud permissions. The package includes English setup instructions, offline regression/integration tests, a standalone ZIP builder, and no preconfigured operational IDs or credentials.
+Requires Python 3.11+ and Git. Follow the [installation guide](scripts/pbip-metadata-installer/README.md) to download the package, install it in your Power BI repository, and find the generated documentation.
 
 ## Repository Map
 
@@ -60,6 +60,7 @@ Requires Python 3.11+ and Git. Installation does not commit, push or change clou
 │   ├── date-table/
 │   └── html-measures/
 ├── scripts/
+│   ├── pbip-metadata-installer/
 │   └── tabular-editor/
 ├── prompts/
 ├── skills/
