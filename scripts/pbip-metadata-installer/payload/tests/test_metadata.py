@@ -172,7 +172,7 @@ class LinkTests(unittest.TestCase):
 
     def test_ambiguous_names_get_no_link(self):
         with tempfile.TemporaryDirectory() as folder:
-            root = Path(folder)
+            root = Path(folder).resolve()
             (root / 'A.md').write_text(self.DOC)
             manifest = [dict(name='A', source='Dev/A.Report', document='A.md', workspace='Dev')]
             inventory = {'Dev': [dict(name='A', id=self.RID), dict(name='A', id=self.DID)]}
@@ -182,6 +182,19 @@ class LinkTests(unittest.TestCase):
             updates, missing = links.build_updates(root, manifest, {'Dev': self.WID}, inventory, {'Dev/A.Report': self.RID})
             self.assertEqual(missing, [])
             self.assertIn(self.RID, updates[root / 'A.md'])
+
+    def test_equivalent_directory_paths_produce_canonical_keys(self):
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder).resolve()
+            (root / 'nested').mkdir()
+            (root / 'A.md').write_text(self.DOC, encoding='utf-8')
+            alias = root / 'nested' / '..'
+            manifest = [dict(name='A', source='Example/A.Report', document='A.md', workspace='Example')]
+            inventory = {'Example': [dict(name='A', id=self.RID)]}
+            expected, _ = links.build_updates(root, manifest, {'Example': self.WID}, inventory, {})
+            actual, _ = links.build_updates(alias, manifest, {'Example': self.WID}, inventory, {})
+            self.assertEqual(actual, expected)
+            self.assertTrue(all(path == path.resolve() for path in actual))
 
     def test_pagination_rejects_external_host(self):
         with patch.object(links, 'request', return_value={'value': [], '@odata.nextLink': 'https://example.org/steal-token'}):
