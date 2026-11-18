@@ -108,8 +108,17 @@ def install(args):
         raise ValueError('Cannot identify the default branch. Set origin/HEAD with git remote set-head origin -a.')
     if branch == default_branch or branch in ('HEAD', 'main', 'master'):
         raise ValueError('Use a separate documentation branch, not the source branch.')
-    service = args.service if args.service is not None else bool(prior_config.get('service_enrichment', False))
+    service = args.service if args.service is not None else prior_config.get('service_enrichment', False)
+    if not isinstance(service, bool):
+        raise ValueError('service_enrichment must be a JSON boolean: true or false.')
     files = make_plan(root, sources, branch, service, default_branch)
+    # Configuration belongs to the user. Preserve extra settings and formatting
+    # unless a supplied option actually changes the effective configuration.
+    if prior_config_path.exists() and CONFIG in previous.get('files', {}):
+        updated_config = dict(prior_config)
+        updated_config.update(json.loads(files[CONFIG]))
+        files[CONFIG] = (prior_config_path.read_bytes() if updated_config == prior_config else
+                         (json.dumps(updated_config, indent=2) + '\n').encode())
     changed = {}
     for relative, content in files.items():
         target = safe_target(root, relative)
@@ -121,7 +130,7 @@ def install(args):
             if not args.upgrade:
                 raise ValueError(f'Existing file differs: {relative}. Use --upgrade for a managed installation.')
             known = previous.get('files', {}).get(relative)
-            if known is None or digest(target.read_bytes()) != known:
+            if known is None or (relative != CONFIG and digest(target.read_bytes()) != known):
                 raise ValueError(f'Local or unmanaged changes detected: {relative}. Preserve/resolve them before upgrading.')
         changed[relative] = content
     # Preflight the entire plan before any target writes.
