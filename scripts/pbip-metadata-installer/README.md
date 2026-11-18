@@ -4,11 +4,6 @@ Turn a Power BI Project repository into automatically updated Markdown documenta
 This standalone installer includes the generator, regression tests and a GitHub
 Actions workflow. Version: **1.0.0**.
 
-The package contains no tenant, application, workspace or report identifiers,
-credentials, private reports or generated customer documentation. All fixtures
-are synthetic. Operational identifiers are supplied by each installation.
-The MIT copyright notice is retained in `LICENSE`.
-
 ## What you get
 
 - One Markdown document per report, including tables, columns, calculated
@@ -20,7 +15,6 @@ The MIT copyright notice is retained in `LICENSE`.
 - Optional Power BI workspace links, report/dataset IDs and page links.
 - PR preview artifacts and a dedicated documentation branch after merge.
 - Automatic updates on source changes, manual runs and daily at 05:00 UTC.
-- No Workato dependency and no model data queries.
 
 ## Requirements
 

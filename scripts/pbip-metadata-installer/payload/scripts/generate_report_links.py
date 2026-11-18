@@ -134,6 +134,8 @@ def enrich(doc, report, workspace):
 
 
 def build_updates(docs, manifest, mapping, inventories, overrides):
+    # Windows short/long directory aliases must produce one consistent key form.
+    docs = docs.resolve()
     updates, index = {}, ['# Published report links', '', 'Workspace links require access. Matching is scoped to a workspace.', '']
     missing = []
     datasets = ['# Report dataset IDs', '', 'Report workspace IDs do not establish dataset location.', '']
