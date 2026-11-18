@@ -28,7 +28,13 @@ Actions workflow. Version: **1.0.0**.
 
 ## Install from this repository
 
-Clone/download the repository and open a terminal in its root. Preview first:
+1. Download this repository using **Code > Download ZIP** and extract it, or clone it with Git.
+2. Open a terminal in the downloaded **Power-BI-Code** folder. Keep the entire
+   `scripts/pbip-metadata-installer` folder together; `install.ps1` needs the other files.
+3. Replace `C:\Repos\MyPowerBI` below with the local root of **your Power BI Git
+   repository**, where your `.Report` and `.SemanticModel` folders are stored.
+
+Preview the installation:
 
 ```powershell
 .\scripts\pbip-metadata-installer\install.ps1 -RepositoryPath "C:\Repos\MyPowerBI" -WhatIf
@@ -40,18 +46,35 @@ Install with local metadata only (no Microsoft credentials needed):
 .\scripts\pbip-metadata-installer\install.ps1 -RepositoryPath "C:\Repos\MyPowerBI"
 ```
 
-Source folders are discovered automatically. To choose them explicitly:
+After installation, review and commit the installed files in **your Power BI
+repository**, then push and merge them into its default branch. Open **Actions >
+PBIP Metadata Documentation** to follow the first run. When it succeeds, switch
+to the **pbip-metadata** branch and open **metadata/README.md**.
+
+### Optional settings
+
+Source folders are discovered automatically. Use the following only if you want
+to select specific folders or change the output branch:
 
 ```powershell
 .\scripts\pbip-metadata-installer\install.ps1 `
   -RepositoryPath "C:\Repos\MyPowerBI" `
   -SourceDirectories "Finance", "Operations" `
-  -DocumentationBranch "pbip-metadata" `
-  -WithService
+  -DocumentationBranch "pbip-metadata"
 ```
 
+| Option | Meaning |
+| --- | --- |
+| `-RepositoryPath` | Local path to your Power BI Git repository; required. |
+| `-SourceDirectories` | Folders to document, relative to that repository. `Finance` and `Operations` are example folder names. Omit to discover them automatically. |
+| `-DocumentationBranch` | Separate branch for generated documentation; defaults to `pbip-metadata`. |
+| `-WithService` | Add published Power BI links and IDs. Complete the [service setup](USAGE.md#enable-optional-power-bi-service-enrichment) before the first workflow run. |
+| `-WhatIf` | Preview the planned installation without writing files. |
+| `-Upgrade` | Update an existing installation. |
+
+The backtick at the end of a PowerShell line continues the same command.
+
 If Python is not on PATH, add `-PythonExecutable "C:\Tools\Python\python.exe"`.
-All paths in these commands are examples, not paths to an existing account.
 Use your normal execution-policy process if PowerShell blocks a downloaded script.
 
 Cross-platform equivalent:
@@ -59,24 +82,28 @@ Cross-platform equivalent:
 ```sh
 python scripts/pbip-metadata-installer/install.py \
   --repository /path/to/repository \
-  --source Finance --source Operations \
-  --with-service
+  --source Finance --source Operations
 ```
 
 ## Install from the ZIP
 
-Download `pbip-metadata-installer-v1.0.0.zip` from the **Community Metadata
-Installer Checks** workflow artifact named `pbip-metadata-installer-package`.
-Extract it, then run `install.ps1` or `install.py` from the extracted folder.
+For a smaller download, open this repository's **Actions > Community Metadata
+Installer Checks**, select a successful run on `main`, and download the
+`pbip-metadata-installer-package` artifact. GitHub requires you to sign in for
+artifact downloads. Extract the artifact, then extract the installer ZIP inside it.
+Open a terminal in the extracted `pbip-metadata-installer` folder and run:
+
+```powershell
+.\install.ps1 -RepositoryPath "C:\Repos\MyPowerBI"
+```
+
+Artifacts expire after 90 days; use the repository download above if unavailable.
 The ZIP is self-contained; no other repository files are needed. Its SHA-256
 checksum is included in `SHA256SUMS`. Build the same ZIP locally with:
 
 ```sh
 python scripts/pbip-metadata-installer/build_package.py --out /path/to/distribution
 ```
-
-Only an explicit list of installer/payload/test files is packaged. Local output,
-credentials, caches and reports are never recursively swept into the ZIP.
 
 ## What installation does
 
@@ -124,7 +151,9 @@ documentation branch.
 
 Re-running an unchanged installation is a no-op. Use `-Upgrade` / `--upgrade`
 for a newer version or to switch `-WithService` / `-WithoutService`.
-Managed files modified locally are **not overwritten**, even with upgrade.
+Your edits to `config.json` are preserved; explicit installer options override
+only their corresponding settings. Other managed files modified locally are
+**not overwritten**, even with upgrade.
 Resolve those differences yourself before updating. `.gitignore` additions are
 merged without replacing existing content. Existing unrelated workflows and
 unmanaged files with conflicting names are left untouched and stop installation.
@@ -146,10 +175,6 @@ enrichment if you only need repository-based documentation.
 python -m unittest discover -s scripts/pbip-metadata-installer/tests -v
 python -m unittest discover -s scripts/pbip-metadata-installer/payload/tests -v
 ```
-
-Installer integration tests use a temporary Git repository and synthetic PBIP
-files. No cloud credentials or network access are required. CI tests on Windows
-and Linux, including the PowerShell wrapper on Windows, and builds the ZIP.
 
 This is a documentation extractor, not a full TMDL validator. Hidden pages are
 excluded. Visual fields/filters are best-effort, and legacy report page filters
