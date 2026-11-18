@@ -14,8 +14,8 @@ Source folders are read from `.pbip-metadata/config.json`.
 
 ## Enable optional Power BI Service enrichment
 
-Local metadata works without credentials. Service enrichment adds workspace
-links and published IDs; it does not query business data or refresh models.
+Service enrichment adds links to published reports and their workspace and
+dataset IDs. Complete this setup only if you want those additions.
 
 1. In the [Entra admin center](https://entra.microsoft.com), select the tenant
    that contains your Power BI workspaces.
@@ -81,9 +81,8 @@ workflow if you need a different time.
 - **With service enabled:** `report_links.md`, `report_datasets.md` and
   `service-status.json` provide published links, IDs and match results.
 
-Workspace links require the reader to have access. These are not Power BI App
-links. App membership is never assumed. Dataset IDs do not establish dataset
-location; cross-workspace dataset IDs are included only when returned by the API.
+Report links open the workspace version of the report and require the reader to
+have access to it. Use your Power BI App's own links when sharing with App audiences.
 
 Matching uses the exact report name within the mapped workspace. For renamed or
 ambiguous reports, set `REPORT_MAPPING`, for example:
@@ -113,7 +112,3 @@ documentation remains available. Preview artifacts may still be uploaded on a
 failed run, so check the run status before using them. Rotate the GitHub secret
 before it expires.
 
-The generator reads schema and expressions, not actual model values. It cannot
-answer live business questions or report refresh status. Multiline code and
-descriptions are preserved using TMDL indentation/fence boundaries; malformed
-JSON and unclosed TMDL fences fail visibly.

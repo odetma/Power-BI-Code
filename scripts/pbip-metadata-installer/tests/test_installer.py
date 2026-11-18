@@ -74,6 +74,34 @@ class InstallerTests(unittest.TestCase):
         self.assertEqual(len(backups), 1)
         self.assertFalse(json.loads(backups[0].read_text())['service_enrichment'])
 
+    def test_user_configuration_survives_upgrade(self):
+        self.assertEqual(self.invoke().returncode, 0)
+        path = self.root / '.pbip-metadata/config.json'
+        config = json.loads(path.read_text())
+        config.update(service_enrichment=True, documentation_branch='report-docs', custom_setting='keep')
+        path.write_text(json.dumps(config, indent=4) + '\n', encoding='utf-8')
+        original = path.read_bytes()
+        result = self.invoke('--upgrade')
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(path.read_bytes(), original)
+        result = self.invoke('--upgrade', '--without-service')
+        self.assertEqual(result.returncode, 0, result.stderr)
+        config['service_enrichment'] = False
+        self.assertEqual(json.loads(path.read_text()), config)
+        self.assertIn(original, [p.read_bytes() for p in (self.root / '.pbip-metadata/backups').rglob('config.json')])
+
+    def test_string_boolean_is_rejected_without_changes(self):
+        self.assertEqual(self.invoke().returncode, 0)
+        path = self.root / '.pbip-metadata/config.json'
+        config = json.loads(path.read_text())
+        config['service_enrichment'] = 'false'
+        path.write_text(json.dumps(config), encoding='utf-8')
+        before = self.snapshot()
+        result = self.invoke('--upgrade')
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn('JSON boolean', result.stderr)
+        self.assertEqual(before, self.snapshot())
+
     def test_conflicting_workflow_is_preserved(self):
         path = self.root / '.github/workflows/pbip-metadata.yml'
         path.parent.mkdir(parents=True)
