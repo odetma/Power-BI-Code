@@ -1,0 +1,135 @@
+name: PBIP Metadata Documentation
+
+on:
+  pull_request:
+    paths:
+      - '**/*.Report/**'
+      - '**/*.SemanticModel/**'
+      - '.pbip-metadata/**'
+      - '.github/workflows/pbip-metadata.yml'
+  push:
+    branches: [__DEFAULT_BRANCH_JSON__]
+    paths:
+      - '**/*.Report/**'
+      - '**/*.SemanticModel/**'
+      - '.pbip-metadata/**'
+      - '.github/workflows/pbip-metadata.yml'
+  workflow_dispatch:
+  schedule:
+    - cron: '0 5 * * *'
+
+permissions:
+  contents: read
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    outputs:
+      documentation_branch: ${{ steps.config.outputs.documentation_branch }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Read configuration
+        id: config
+        env:
+          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+        run: |
+          python - <<'PY'
+          import json, os, subprocess
+          from pathlib import Path
+          config = json.loads(Path('.pbip-metadata/config.json').read_text())
+          branch = config['documentation_branch']
+          subprocess.run(['git', 'check-ref-format', '--branch', branch], check=True)
+          if branch in (os.environ['DEFAULT_BRANCH'], 'main', 'master', 'HEAD') or '\n' in branch or '\r' in branch:
+              raise ValueError('Use a separate documentation branch.')
+          if not isinstance(config['service_enrichment'], bool):
+              raise ValueError('service_enrichment must be a boolean.')
+          with open(os.environ['GITHUB_OUTPUT'], 'a') as stream:
+              stream.write('documentation_branch=' + branch + '\n')
+              stream.write('service=' + str(config['service_enrichment']).lower() + '\n')
+          PY
+      - name: Test metadata extraction
+        run: python -m unittest discover -s .pbip-metadata/tests -p test_metadata.py -v
+      - name: Generate deterministic documentation
+        run: |
+          python .pbip-metadata/scripts/generate_pbip_md.py --out pbip-metadata-output
+          python .pbip-metadata/scripts/generate_pbip_md.py --out pbip-metadata-repeat
+          diff -r pbip-metadata-output pbip-metadata-repeat
+      - name: Add Power BI workspace links
+        if: github.event_name != 'pull_request' && steps.config.outputs.service == 'true'
+        env:
+          AZURE_CLIENT_ID: ${{ vars.AZURE_CLIENT_ID || secrets.AZURE_CLIENT_ID }}
+          AZURE_TENANT_ID: ${{ vars.AZURE_TENANT_ID || secrets.AZURE_TENANT_ID }}
+          AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
+          WORKSPACE_MAPPING: ${{ vars.WORKSPACE_MAPPING }}
+          REPORT_MAPPING: ${{ vars.REPORT_MAPPING }}
+        run: python .pbip-metadata/scripts/generate_report_links.py --dir pbip-metadata-output
+      - name: Upload documentation
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pbip-metadata
+          path: pbip-metadata-output/
+          if-no-files-found: error
+          retention-days: 30
+
+  publish:
+    needs: generate
+    if: github.event_name != 'pull_request' && github.ref_name == github.event.repository.default_branch
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    concurrency:
+      group: pbip-metadata-publish
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: publisher
+          fetch-depth: 0
+      - uses: actions/download-artifact@v4
+        with:
+          name: pbip-metadata
+          path: generated
+      - name: Publish documentation branch
+        working-directory: publisher
+        env:
+          DOCS_BRANCH: ${{ needs.generate.outputs.documentation_branch }}
+          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          git check-ref-format --branch "$DOCS_BRANCH"
+          git fetch origin "$DEFAULT_BRANCH"
+          if [ "$(git rev-parse "origin/$DEFAULT_BRANCH")" != "$GITHUB_SHA" ]; then
+            echo 'Skipping outdated source revision.'
+            exit 0
+          fi
+          if git show-ref --verify --quiet "refs/remotes/origin/$DOCS_BRANCH"; then
+            git switch -C "$DOCS_BRANCH" "origin/$DOCS_BRANCH"
+          else
+            git switch --orphan "$DOCS_BRANCH"
+          fi
+          python3 - <<'PY'
+          from pathlib import Path
+          import shutil
+          destination = Path('metadata').resolve()
+          if destination.parent != Path.cwd().resolve():
+              raise ValueError('Unexpected publication destination.')
+          if destination.exists():
+              shutil.rmtree(destination)
+          shutil.copytree('../generated', destination)
+          PY
+          git add --all metadata
+          if git diff --cached --quiet; then
+            echo 'Documentation unchanged.'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m "Update PBIP documentation from ${GITHUB_SHA} [skip ci]"
+          git push origin "HEAD:$DOCS_BRANCH"
